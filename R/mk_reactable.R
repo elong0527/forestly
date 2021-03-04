@@ -26,4 +26,6 @@ mk_reactable <- function(data,
             ...)
 
 }
-
+#try to add new code
+c<-1+1
+c
