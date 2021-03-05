@@ -29,3 +29,6 @@ mk_reactable <- function(data,
 #try to add new code
 c<-1+1
 c
+# add a new code
+c<-1*5+1
+c
