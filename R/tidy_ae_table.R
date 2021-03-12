@@ -1,5 +1,16 @@
 #' tidy_ae_table
 #'
+#'
+#' @param population_from
+#' @param observation_from
+#' @param population_where
+#' @param observation_where
+#' @param treatment_var
+#' @param treatment_order
+#' @param ae_var
+#' @param stratum_var
+#' @param listing_var
+#'
 #' @examples
 #'
 #' library(dplyr)
@@ -9,9 +20,7 @@
 #'               observation_from = adae,
 #'               treatment_var = "TRTA",
 #'               treatment_order = c("MK9999" = "Xanomeline High Dose", "Placebo" = "Placebo"))
-#'
-#' @export
-#'
+
 tidy_ae_table <- function(population_from,
                           observation_from,
                           population_where = "ITTFL=='Y'",
