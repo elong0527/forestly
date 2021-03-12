@@ -1,26 +1,28 @@
-#' tidy_ae_table
+#' Define analysis data
+#'
+#'This function obtain AE information ready for visulization
 #'
 #'
-#' @param population_from
-#' @param observation_from
-#' @param population_where
-#' @param observation_where
-#' @param treatment_var
-#' @param treatment_order
-#' @param ae_var
+#' @param population_from data sources
+#' @param observation_from data sources
+#' @param population_where Select the Desired Observation
+#' @param observation_where Select the Desired Observation
+#' @param treatment_var Select the Desired variable
+#' @param treatment_order To customize the sort order
+#' @param ae_var Select the Desired variable
 #' @param stratum_var
 #' @param listing_var
 #'
-#' @examples
 #'
 #' library(dplyr)
 #' library(tidyr)
+#' @example
 #' db <- adsl %>% rename(TRTA = TRT01A)
 #' tidy_ae_table(population_from  = db,
 #'               observation_from = adae,
 #'               treatment_var = "TRTA",
 #'               treatment_order = c("MK9999" = "Xanomeline High Dose", "Placebo" = "Placebo"))
-
+#' @export
 tidy_ae_table <- function(population_from,
                           observation_from,
                           population_where = "ITTFL=='Y'",
@@ -64,3 +66,4 @@ tidy_ae_table <- function(population_from,
   listing_var <- unique(c("USUBJID", "ae", "treatment", listing_var))
   list(table = res, listing = db[, listing_var])
 }
+
