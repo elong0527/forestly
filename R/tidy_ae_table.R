@@ -1,17 +1,18 @@
-#' Define analysis data
+#' tidy_ae_table
 #'
-#'This function obtain AE information ready for visulization
+#' Define analysis data
+#' This function obtain AE information ready for visualization
 #'
 #'
 #' @param population_from data sources
 #' @param observation_from data sources
-#' @param population_where Select the Desired Observation
-#' @param observation_where Select the Desired Observation
-#' @param treatment_var Select the Desired variable
+#' @param population_where Select the rows which is "Y" in column "ITTFL"
+#' @param observation_where A character string to define the criteria to select analysis observation.
+#' @param treatment_var A character string to define the variable of new column called "treatment"
 #' @param treatment_order To customize the sort order
 #' @param ae_var Select the Desired variable
-#' @param stratum_var
-#' @param listing_var
+#' @param stratum_var A character string to define the variable of baseline stratum in 'population_from'.Only one 'stratum_var' is allowed.
+#' @param listing_var Tells the function which column of the table to be selected as the final output
 #'
 #'
 #' library(dplyr)

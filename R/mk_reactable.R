@@ -1,8 +1,10 @@
+#' mk_reactable
+#'
 #' Define default behavior of reactable
 #'
-#' @param data
-#' @param resizable
-#' @param filterable make columns filterable using filterable
+#' @param data data source
+#' @param resizable make columns resizable by setting resizable to TRUE
+#' @param filterable make columns filterable using filterable to TRUE
 #' @param searchable make the entire table searchable using searchable
 #' @param defaultPageSize The page size options be customized 10 through pageSizeOptions
 #' @param borderless  customize table styling using Borderless
