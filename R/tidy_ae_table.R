@@ -14,16 +14,14 @@
 #' @param stratum_var A character string to define the variable of baseline stratum in 'population_from'.Only one 'stratum_var' is allowed.
 #' @param listing_var Tells the function which column of the table to be selected as the final output
 #'
-#'
-#' library(dplyr)
-#' library(tidyr)
+#' @return an data frame
+#' @export
 #' @example
 #' db <- adsl %>% rename(TRTA = TRT01A)
 #' tidy_ae_table(population_from  = db,
 #'               observation_from = adae,
 #'               treatment_var = "TRTA",
 #'               treatment_order = c("MK9999" = "Xanomeline High Dose", "Placebo" = "Placebo"))
-#' @export
 tidy_ae_table <- function(population_from,
                           observation_from,
                           population_where = "ITTFL=='Y'",
