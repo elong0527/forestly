@@ -1,7 +1,7 @@
 #' tidy_ae_table
 #'
 #' Define analysis data
-#' This function obtain AE information ready for visualization
+#' This function is used to obtain AE information ready for visualization
 #'
 #'
 #' @param population_from data sources
@@ -17,11 +17,12 @@
 #' @return an data frame
 #' @export
 #' @example
-#' db <- adsl %>% rename(TRTA = TRT01A)
-#' tidy_ae_table(population_from  = db,
-#'               observation_from = adae,
-#'               treatment_var = "TRTA",
-#'               treatment_order = c("MK9999" = "Xanomeline High Dose", "Placebo" = "Placebo"))
+#' db <- tidy_ae_table(population_from  = adsl %>% rename(TRTA = TRT01A),
+#'                     observation_from = adae,
+#'                     treatment_var = "TRTA",
+#'                     treatment_order = c("MK9999" = "Xanomeline High Dose", "Placebo" = "Placebo"),
+#'                     listing_var = c("SITEID", "USUBJID", "AGE", "RACE", "SEX",
+#'                                     "AETERM", "AESER", "AEREL", "AEACN", "AEOUT") )
 tidy_ae_table <- function(population_from,
                           observation_from,
                           population_where = "ITTFL=='Y'",
