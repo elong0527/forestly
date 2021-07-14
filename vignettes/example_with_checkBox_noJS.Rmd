@@ -1,0 +1,276 @@
+---
+title: "Example with Checkbox no JS"
+output: 
+  html_document:
+    self_contained: false
+vignette: >
+  %\VignetteIndexEntry{Example with Checkbox no JS}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+This vignette introduces the construction of interactive forest plot.
+
+# 1. Load Required Package 
+```{r setup}
+library(DescTools)      # Compare risk difference (Obtain confidence interval)
+library(plotly)         # Interactive figure 
+library(reactable)      # Interactive table 
+library(dplyr)          
+library(tidyr)
+library(crosstalk)
+library(htmltools)
+devtools::load_all()
+```
+
+
+# 2. Data Prepartion
+
+## 2.1 Read data
+```{r}
+head(adsl)
+head(adae)
+```
+
+## 2.2 Define analysis data
+```{r}
+# tidy_ae_table is defined in R/ folder with same name 
+# obtain AE information ready for visualization
+db <- tidy_ae_table1(population_from  = adsl %>% rename(TRTA = TRT01A), 
+                     observation_from = adae,
+                     population_where = NULL, 
+                     observation_where = NULL,
+                     treatment_var = "TRTA",  #sometimes it is "ACTLARM",
+                     treatment_order = c("MK9999" = "Xanomeline High Dose", "Placebo" = "Placebo"),
+                     ae_var = "AEDECOD",
+                     ae_interested = "AESER",
+                     listing_var = c("SITEID", "USUBJID", "RACE", "SEX", 
+                                     "AETERM", "AESER", "AEREL", "AEACN", "AEOUT") )
+
+head(db)
+# db <- tidy_ae_table(population_from  = adsl %>% rename(TRTA = TRT01A),
+#                     observation_from = adae,
+#                     treatment_var = "TRTA",
+#                     treatment_order = c("MK9999" = "Xanomeline High Dose", "Placebo" = "Placebo"),
+#                     listing_var = c("SITEID", "USUBJID", "AGE", "RACE", "SEX", 
+#                                     "AETERM", "AESER", "AEREL", "AEACN", "AEOUT") )
+```
+
+## 2.3 Calculate propotion test using M&N method
+```{r}
+# Calculate test using M&N method 
+tb <- cbind(db$table,
+            with(db$table, prop_test_mn(x0 = n_2, n0 = N_2, x1 = n_1, n1 = N_1))) 
+
+t_display <- tb %>% mutate(fig_prop = NA, fig_diff = est, 
+                           ae = tools::toTitleCase(tolower(ae))) %>% 
+                    select(ae, ae_substructure, stratum, 
+                           fig_prop, fig_diff, n_1, pct_1, n_2, pct_2)
+
+head(t_display)
+```
+
+## 2.4 Contruct the table containg all the details
+```{r}
+# Listing of subjects
+# Require proper format for the header. 
+t_detail <- db$listing
+```
+
+## 2.5 Set the color of the two propotion in the forest plot
+```{r}
+color <- c("gold", "purple")
+```
+
+# 3. Construct Interactive Froest Plot
+
+## 3.1 Define auxilliary functions for the interactive plot
+```{r}
+# function to create proportion of subjects figure
+
+# js_fig_prop_cell <- sparkline_point_js(tbl = tb,
+#                                        x = c("pct_1","pct_2"),
+#                                        y = c(1, 1),
+#                                        xlim = round(range(c(tb$pct_1, tb$pct_2)) + c(-0.51, 0.51) ),
+#                                        color = color,
+#                                        height = 30)
+
+fig_prop_cell <- function(value, index){
+
+  tmp <- tb[index, ] %>% pivot_longer(cols = starts_with("pct"))
+  xlim <- round(range(c(tb$pct_1, tb$pct_2)) + c(-0.51, 0.51) )
+
+  sparkline_point(x = tmp$value,
+                  y = tmp$ae,
+                  xlim = xlim,
+                  color = color,
+                  height = 30)
+}
+
+# function to create Axis 
+fig_prop_footer <- function(value){
+  
+  tmp <- tb[1, ] %>% pivot_longer(cols = starts_with("pct"))
+  xlim <- round(range(c(tb$pct_1, tb$pct_2)) + c(-0.51, 0.51) )
+  sparkline_draw_axis(color = color, 
+                      label = levels(db$listing$treatment), 
+                      xlim = xlim)
+  
+}
+
+# function to create proportion difference figure
+fig_diff_cell <- function(value, index){
+  
+  tmp <- tb[index, ] 
+  xlim = round(range(c(tb$lower, tb$upper)) + c(-0.51, 0.51))
+  
+  sparkline_errorbar(tmp$est, 
+                     tmp$lower, 
+                     tmp$upper, 
+                     xlim = xlim, 
+                     color = "black")
+  
+}
+
+# function to create Axis 
+fig_diff_footer <- function(value){
+  
+  tmp <- tb[1, ] %>% pivot_longer(cols = starts_with("pct"))
+  xlim = round(range(c(tb$lower, tb$upper)) + c(-0.51, 0.51))
+  sparkline_draw_axis(showlegend = FALSE, 
+                      xlab = "MK9999 <- Favor -> Placebo", 
+                      color = "black",
+                      xlim = xlim, height = 60, margin_bottom = 50)
+  
+}
+
+# function to create check box
+filter_checkbox_nobs <- function(id, label, sharedData, group, allLevels = FALSE, inline = FALSE, columns = 1) {
+  options <- crosstalk:::makeGroupOptions(sharedData, group, allLevels)
+  labels <- options$items$label
+  values <- options$items$value
+  options$items <- NULL
+  makeCheckbox <- if (inline) {
+    crosstalk:::inlineCheckbox
+  } else {
+    crosstalk:::blockCheckbox
+  }
+  htmltools::browsable(attachDependencies(
+    tags$div(
+      id = id,
+      class = "form-group crosstalk-input-checkboxgroup crosstalk-input",
+      tags$label(
+        class = "control-label", `for` = id,
+        style = "font-weight: 600;",
+        label
+      ), tags$div(
+        class = "crosstalk-options-group",
+        crosstalk:::columnize(
+          columns,
+          mapply(labels, values, FUN = function(label, value) {
+            makeCheckbox(id, value, label)
+          }, SIMPLIFY = FALSE, USE.NAMES = FALSE)
+        )
+      ), tags$script(
+        type = "application/json",
+        `data-for` = id,
+        jsonlite::toJSON(options, dataframe = "columns", pretty = TRUE)
+      )
+    ),
+    c(list(crosstalk:::jqueryLib()), crosstalkLibs())
+  ))
+}
+```
+
+## 3.2 Make the data frame eligible for check box design
+```{r}
+t_display1 <- SharedData$new(t_display)
+```
+
+
+## 3.3 Plot the interative forest plot
+```{r, message=FALSE}
+h3("Filter by:")
+
+tagList(
+  filter_checkbox_nobs("filter_AEcategory", "Serious Events", t_display1, ~ae_substructure, inline = TRUE),
+  br()
+)
+
+# mk_reactable saved in the R/ folder: define default behavior of reactable. 
+mk_reactable(
+  t_display1,
+  
+  # reactable configuration https://glin.github.io/reactable/reference/reactable.html
+  resizable = TRUE, 
+  filterable = TRUE,
+  searchable = TRUE, 
+  defaultPageSize = 10, 
+  borderless = TRUE, 
+  striped = TRUE, 
+  highlight = TRUE, 
+  
+  # No padding between two cells (ensure no break line between reference line)
+  theme = reactableTheme(cellPadding = "0px 8px"),
+  
+  # Default sort variable 
+  defaultSorted = c("fig_diff"),
+  
+  # Define listing of subjects
+  details = function(index){
+    t_row <- t_display[index, ]
+    subset(t_detail, toupper(ae) %in% toupper(t_row$ae)) %>% mk_reactable
+  },
+  
+  # Customize cell feature 
+  columnGroups = list(
+    colGroup(name = "MK9999 (N = 84)",  columns = c("n_1", "pct_1")),
+    colGroup(name = "Placebo (N = 86)", columns = c("n_2", "pct_2"))
+  ),
+  # 
+  column = list(
+    ae = colDef(header = "Adverse Events", minWidth = 300, align = "right"),
+
+    stratum = colDef(header = "Stratum", show = FALSE),
+
+    fig_prop = colDef(header = "AE Proportion (%)",
+                      minWidth = 300, align = "center",
+                      #cell = JS(js_fig_prop_cell), 
+                      cell = fig_prop_cell, 
+                      footer = fig_prop_footer,
+                      html = TRUE
+    ),
+
+
+    fig_diff = colDef(header = "Risk Diff (%) + 95% CI",
+                      defaultSortOrder = "desc",
+                      minWidth = 200, align = "center",
+                      cell = fig_diff_cell, footer = fig_diff_footer,
+                      show = TRUE),
+
+    n_1 = colDef(header = "n", defaultSortOrder = "desc", width = 60, align = "center"),
+    n_2 = colDef(header = "n", defaultSortOrder = "desc", width = 60, align = "center"),
+    pct_1 = colDef(header = "(%)", defaultSortOrder = "desc", width = 80, align = "center", format = colFormat(digits = 2) ),
+    pct_2 = colDef(header = "(%)", defaultSortOrder = "desc", width = 80, align = "center", format = colFormat(digits = 2) )
+  )
+
+)
+
+# plotly_js <- "https://unpkg.com/react-plotly.js@1.0.2/dist/create-plotly-component.js"
+# browsable(tagList(
+#   reactR::html_dependency_react(),
+#   htmltools::tags$script(src="https://cdn.plot.ly/plotly-latest.min.js"),
+#   htmltools::tags$script(src=plotly_js),
+#   p
+# ))
+```
+
+
+

@@ -41,8 +41,8 @@ prop_test_mn <- function(x0, n0, x1, n1,
   q <- L2^3/((3*L3)^3) - L1*L2/(6*(L3^2)) + L0/(2*L3)
   p_temp <- sqrt( L2^2/((3*L3)^2) - L1/(3*L3) )
   p <- (q>0)*p_temp - (q<0)*p_temp
-  a <- (1/3)*(pi + acos(q/(p^3)))
-
+  a <- (1/3)*(pi + acos(pmin(pmax(q/(p^3), -1.0), 1.0)))
+  
   p0_ml <- 2*p*cos(a) - L2/(3*L3)
   p1_ml <- p0_ml + delta
 
